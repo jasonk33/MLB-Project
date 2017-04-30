@@ -1,0 +1,1934 @@
+---
+title: "Final Project"
+author: "Jason Katz"
+date: "11/21/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(plyr)
+library(dplyr)
+library(data.table)
+library(datasets)
+library(ggplot2)
+library(graphics)
+library(grDevices)
+library(lattice)
+library(lubridate)
+library(manipulate)
+library(MASS)
+library(Matrix)
+library(methods)
+library(mosaic)
+library(mosaicData)
+library(psych)
+library(stats)
+library(stringr)
+library(utils)
+library(zoo)
+library(caret)
+library(class)
+library(rpart)
+library(e1071)
+library(klaR)
+library(mlbench)
+library(randomForest)
+library(Boruta)
+```
+
+
+
+
+```{r, warning=FALSE}
+filenames <- list.files(path="/Users/JasonKatz/Desktop/Brown/Fall 2016/Data Fluency for All/Final Project/Data", pattern="GL+.*TXT")
+
+names <-substr(filenames,1,6)
+
+for(i in names){
+    filepath <- file.path("/Users/JasonKatz/Desktop/Brown/Fall 2016/Data Fluency for All/Final Project/Data",paste(i,".TXT",sep=""))
+    assign(i, read.csv(filepath, header = FALSE))
+    d=get(i)
+    colnames(d)[1:100]=c("Date", "Type", "Day of Week", "Visiting Team", "Visiting Team League", "Visiting Team Game Number", "Home Team", "Home Team League", "Home Team Game Number", "Visiting Team Score", "Home Team Score", "Length of Game (outs)", "Day/Night", "Completion Information", "Forfeit Information", "Protest Information", "Park ID", "Attendance", "Time of Game (minutes)", "Visiting Line Score", "Home Line Score", "Visiting Team At-Bats", "Visiting Team Hits", "Visiting Team Doubles", "Visiting Team Triples", "Visiting Team Homeruns", "Visiting Team RBI", "Visiting Team Sacrafice Hits", "Visiting Team Sacrafice Flies", "Visiting Team Hit-By-Pitch", "Visiting Team Walks", "Visiting Team Intentional Walks", "Visiting Team Strikeouts", "Visiting Team Stolen Bases", "Visiting Team Caught Stealing", "Visiting Team Grounded into Double Play", "Visiting Team Awarded First on Catcher's Interference", "Visiting Team Left on Base", "Visiting Team Pitchers Used", "Visiting Team Individual Earned Runs", "Visiting Team Team Earned Runs", "Visiting Team Wild Pitches", "Visiting Team Balks", "Visiting Team Putouts", "Visiting Team Assists", "Visiting Team Errors", "Visiting Team Passed Balls", "Visiting Team Double Plays", "Visiting Team Triple Plays", "Home Team At-Bats", "Home Team Hits", "Home Team Doubles", "Home Team Triples", "Home Team Homeruns", "Home Team RBI", "Home Team Sacrafice Hits", "Home Team Sacrafice Flies", "Home Team Hit-By-Pitch", "Home Team Walks", "Home Team Intentional Walks", "Home Team Strikeouts", "Home Team Stolen Bases", "Home Team Caught Stealing", "Home Team Grounded into Double Play", "Home Team Awarded First on Catcher's Interference", "Home Team Left on Base", "Home Team Pitchers Used", "Home Team Individual Earned Runs", "Home Team Team Earned Runs", "Home Team Wild Pitches", "Home Team Balks", "Home Team Putouts", "Home Team Assists", "Home Team Errors", "Home Team Passed Balls", "Home Team Double Plays", "Home Team Triple Plays", "Home Plate Umpire ID", "Home Plate Umpire Name", "1B Umpire ID", "1B Umpire Name", "2B Umpire ID", "2B Umpire Name", "3B Umpire ID", "3B Umpire Name", "LF Umpire ID", "LF Umpire Name", "RF Umpire ID", "RF Umpire Name", "Visiting Team Manager ID", "Visiting Team Manager Name", "Home Team Manager ID", "Home Team Manager Name", "Winning Pitcher ID", "Winning Pitcher Name", "Losing Pitcher ID", "Losing Pitcher Name", "Saving Pitcher ID", "Saving Pitcher Name", "Game Winning RBI Batter ID")
+    assign(i,d)
+}
+
+
+for(i in names){
+    d=get(i)
+    colnames(d)[101:161]=c("Game Winning RBI Batter Name", "Visiting Starting Pitcher ID", "Visiting Starting Pitcher Name", "Home Starting Pitcher ID", "Home Starting Pitcher Name", "Visiting Starting Player 1 ID", "Visiting Starting Player 1 Name", "Visiting Starting Player 1 Defensive Position", "Visiting Starting Player 2 ID", "Visiting Starting Player 2 Name", "Visiting Starting Player 2 Defensive Position", "Visiting Starting Player 3 ID", "Visiting Starting Player 3 Name", "Visiting Starting Player 3 Defensive Position", "Visiting Starting Player 4 ID", "Visiting Starting Player 4 Name", "Visiting Starting Player 4 Defensive Position", "Visiting Starting Player 5 ID", "Visiting Starting Player 5 Name", "Visiting Starting Player 5 Defensive Position", "Visiting Starting Player 6 ID", "Visiting Starting Player 6 Name", "Visiting Starting Player 6 Defensive Position", "Visiting Starting Player 7 ID", "Visiting Starting Player 7 Name", "Visiting Starting Player 7 Defensive Position", "Visiting Starting Player 8 ID", "Visiting Starting Player 8 Name", "Visiting Starting Player 8 Defensive Position", "Visiting Starting Player 9 ID", "Visiting Starting Player 9 Name", "Visiting Starting Player 9 Defensive Position", "Home Starting Player 1 ID", "Home Starting Player 1 Name", "Home Starting Player 1 Defensive Position", "Home Starting Player 2 ID", "Home Starting Player 2 Name", "Home Starting Player 2 Defensive Position", "Home Starting Player 3 ID", "Home Starting Player 3 Name", "Home Starting Player 3 Defensive Position", "Home Starting Player 4 ID", "Home Starting Player 4 Name", "Home Starting Player 4 Defensive Position", "Home Starting Player 5 ID", "Home Starting Player 5 Name", "Home Starting Player 5 Defensive Position", "Home Starting Player 6 ID", "Home Starting Player 6 Name", "Home Starting Player 6 Defensive Position", "Home Starting Player 7 ID", "Home Starting Player 7 Name", "Home Starting Player 7 Defensive Position", "Home Starting Player 8 ID", "Home Starting Player 8 Name", "Home Starting Player 8 Defensive Position", "Home Starting Player 9 ID", "Home Starting Player 9 Name", "Home Starting Player 9 Defensive Position", "Additional Information", "Acquisition Information")
+    assign(i,d)
+}
+
+for(i in names){
+    d=get(i)
+    d.sub <- sub("ANA|CAL|LAA", "Los Angeles Angels", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("ARI", "Arizona Diamondbacks", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("ATL|MLN|BSN|BS1", "Atlanta Braves", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("BAL|SLA|MLA", "Baltimore Orioles", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("BOS", "Boston Red Sox", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("CHA", "Chicago White Sox", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("CHN|CH1|CH2", "Chicago Cubs", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("CIN|CN2", "Cincinnati Reds", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("CLE", "Cleveland Indians", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("COL", "Colorado Rockies", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("DET", "Detroit Tigers", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("HOU", "Houston Astros", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("KCA", "Kansas City Royals", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("LAN|BRO|BR3|BR4", "Los Angeles Dodgers", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("MIA|FLO", "Miami Marlins", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("MIL|SE1", "Milwaukee Brewers", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("MIN|WS1", "Minnesota Twins", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("NYA|BLA", "New York Yankees", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("NYN", "New York Mets", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("OAK|KC1|PHA", "Oakland Athletics", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("PHI", "Philadelphia Phillies", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("PIT|PT1", "Pittsburgh Pirates", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("SDN", "San Diego Padres", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("SEA", "Seattle Mariners", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("SFN|NY1", "San Francisco Giants", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("SLN", "Cardinals", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("TBA", "Tampa Bay Rays", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("TEX|WS2", "Texas Rangers", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("TOR", "Toronto Blue Jays", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("WAS|MON", "Washington Nationals", d$`Visiting Team`)
+    d$`Visiting Team` <- d.sub
+    d.sub <- sub("ANA|CAL|LAA", "Los Angeles Angels", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("ARI", "Arizona Diamondbacks", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("ATL|MLN|BSN|BS1", "Atlanta Braves", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("BAL|SLA|MLA", "Baltimore Orioles", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("BOS", "Boston Red Sox", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("CHA", "Chicago White Sox", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("CHN|CH1|CH2", "Chicago Cubs", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("CIN|CN2", "Cincinnati Reds", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("CLE", "Cleveland Indians", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("COL", "Colorado Rockies", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("DET", "Detroit Tigers", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("HOU", "Houston Astros", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("KCA", "Kansas City Royals", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("LAN|BRO|BR3|BR4", "Los Angeles Dodgers", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("MIA|FLO", "Miami Marlins", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("MIL|SE1", "Milwaukee Brewers", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("MIN|WS1", "Minnesota Twins", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("NYA|BLA", "New York Yankees", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("NYN", "New York Mets", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("OAK|KC1|PHA", "Oakland Athletics", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("PHI", "Philadelphia Phillies", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("PIT|PT1", "Pittsburgh Pirates", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("SDN", "San Diego Padres", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("SEA", "Seattle Mariners", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("SFN|NY1", "San Francisco Giants", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("SLN", "Cardinals", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("TBA", "Tampa Bay Rays", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("TEX|WS2", "Texas Rangers", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("TOR", "Toronto Blue Jays", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    d.sub <- sub("WAS|MON", "Washington Nationals", d$`Home Team`)
+    d$`Home Team` <- d.sub
+    assign(i,d)
+}
+
+dlist <- lapply ( ls(patt='^GL'), get)
+
+data.total <- do.call("rbind", dlist)
+
+date <- ymd(data.total$Date)
+
+data.total$Date <- date
+
+data.total$year <- factor(format(data.total$Date, "%Y"))
+```
+
+
+
+
+
+
+
+
+```{r, warning=FALSE}
+Team.Names <- unique(GL2015$`Home Team`)
+
+for (i in Team.Names) {
+    home.team <- paste(i, "HOME", sep = " ")
+    assign(home.team, filter(data.total, data.total$`Home Team` == i))
+}
+
+for (i in Team.Names) {
+    away.team <- paste(i, "AWAY", sep = " ")
+    assign(away.team, filter(data.total, data.total$`Visiting Team` == i))
+}
+
+Team.Names.Home <- Team.Names
+
+Team.Names.Away <- Team.Names
+
+Team.Names.Home[-length(Team.Names)] <- paste0(Team.Names[-length(Team.Names)], ' HOME')
+
+Team.Names.Away[-length(Team.Names)] <- paste0(Team.Names[-length(Team.Names)], ' AWAY')
+
+St.Louis.Home <- "Cardinals HOME"
+
+Team.Names.Home[30] <- St.Louis.Home
+
+St.Louis.Away <- "Cardinals AWAY"
+
+Team.Names.Away[30] <- St.Louis.Away
+
+for (i in Team.Names.Home) {
+    mean.runs.home <- paste(i, "MEAN RUNS", sep = " ")
+    d=get(i)
+    assign(mean.runs.home, mean(d$`Home Team Score`))
+}
+
+Home.Mean.Runs.List <- lapply ( ls(patt='HOME MEAN RUNS'), get)
+
+Home.Mean.Runs <- data.matrix(Home.Mean.Runs.List)
+
+for (i in Team.Names.Home) {
+    mean.runs.against.home <- paste(i, "MEAN RUNS AGAINST", sep = " ")
+    d=get(i)
+    assign(mean.runs.against.home, mean(d$`Visiting Team Score`))
+}
+
+Home.Mean.Runs.Against.List <- lapply ( ls(patt='HOME MEAN RUNS AGAINST'), get)
+
+Home.Mean.Runs.Against <- data.matrix(Home.Mean.Runs.Against.List)
+
+for (i in Team.Names.Away) {
+    mean.runs.away <- paste(i, "MEAN RUNS", sep = " ")
+    d=get(i)
+    assign(mean.runs.away, mean(d$`Visiting Team Score`))
+}
+
+Away.Mean.Runs.List <- lapply ( ls(patt='AWAY MEAN RUNS'), get)
+
+Away.Mean.Runs <- data.matrix(Away.Mean.Runs.List)
+
+for (i in Team.Names.Away) {
+    mean.runs.against.away <- paste(i, "MEAN RUNS AGAINST", sep = " ")
+    d=get(i)
+    assign(mean.runs.against.away, mean(d$`Home Team Score`))
+}
+
+Away.Mean.Runs.Against.List <- lapply ( ls(patt='AWAY MEAN RUNS AGAINST'), get)
+
+Away.Mean.Runs.Against <- data.matrix(Away.Mean.Runs.Against.List)
+
+colnames(Home.Mean.Runs)[1]=c("Home Mean Runs")
+
+colnames(Home.Mean.Runs.Against)[1]=c("Home Mean Runs Against")
+
+colnames(Away.Mean.Runs)[1]=c("Away Mean Runs")
+
+colnames(Away.Mean.Runs.Against)[1]=c("Away Mean Runs Against")
+
+Home.Mean.Runs <- as.data.frame(Home.Mean.Runs)
+
+Home.Mean.Runs.Against <- as.data.frame(Home.Mean.Runs.Against)
+
+Away.Mean.Runs <- as.data.frame(Away.Mean.Runs)
+
+Away.Mean.Runs.Against <- as.data.frame(Away.Mean.Runs.Against)
+
+Mean.Runs <- matrix(0, ncol = 6, nrow = 30)
+
+Mean.Runs <- as.data.frame(Mean.Runs)
+
+Team.Names.Alphabetical <- sort(Team.Names)
+
+Mean.Runs$V1 <- Team.Names.Alphabetical
+
+Mean.Runs$V2 <- as.numeric(Home.Mean.Runs$`Home Mean Runs`)
+
+Mean.Runs$V3 <- as.numeric(Home.Mean.Runs.Against$`Home Mean Runs Against`)
+
+Mean.Runs$V4 <- as.numeric(Away.Mean.Runs$`Away Mean Runs`)
+
+Mean.Runs$V5 <- as.numeric(Away.Mean.Runs.Against$`Away Mean Runs Against`)
+
+Mean.Runs$V6 <- ((Mean.Runs$V2 - Mean.Runs$V3) - (Mean.Runs$V4 - Mean.Runs$V5))/2
+
+colnames(Mean.Runs)[1:6]=c("Team", "Home Mean Runs", "Home Mean Runs Against", "Away Mean Runs", "Away Mean Runs Against", "Home Field Advantage")
+
+Mean.Runs$Team <- as.factor(Mean.Runs$Team)
+
+Home.Field.Advantage <- matrix(Mean.Runs$`Home Field Advantage`, ncol = 30, nrow = 1)
+
+par(mar=c(4.5, 13, 3, 2))
+par(xpd=TRUE)
+barplot(rev(Home.Field.Advantage), names.arg = rev(Team.Names.Alphabetical), beside = FALSE, cex.names = 1.1, horiz = TRUE, las=1, space = 1, col = "slateblue3", border=NA)
+mtext(text="Team", side=2, line=11, cex = 2)
+mtext(text="Added Runs", side=1, line=2.5, cex = 2)
+mtext(text="MLB Teams Home Field Advantage", side=3, line=.2, cex = 3)
+par(xpd=TRUE)
+```
+
+This graph explores the trend of home field Advantage that is often discussed in the MLB. This data comes from every game played by each team in MLB history. The team names are listed horizontally on the y-axis and their corresponding “added run,” value can be seen extending across the x-axis. In this case, each team’s added run value corresponds to the average number runs that a team will add to their score when playing at home versus when they play at an unidentified location. For example, let’s suppose that the Cardinals played in a game and won by 4 runs. If they re-played this game at their own home field, on average, they would have won +0.2 more runs. The largest home field advantage discovered was that of the Colorado Rockies, with an average of+0.5 added runs each time they play at home, almost double the average for the MLB (0.254). Considering this representation is based off of past data and is not a predictive model, we are only able to see post-game influence that home field advantage has on teams runs. 
+
+
+
+```{r, warning=FALSE}
+Home_Away_Difference <- matrix(0, ncol = 3, nrow = 210876)
+
+Home_Away_Difference <- as.data.frame(Home_Away_Difference)
+
+Home_Away_Difference$V1 <- data.total$`Home Team Score`
+
+Home_Away_Difference$V2 <- data.total$`Visiting Team Score`
+
+Home_Away_Difference$V3 <- (Home_Away_Difference$V1 - Home_Away_Difference$V2)
+
+colnames(Home_Away_Difference)[1:3]=c("Home Team Score", "Visiting Team Score", "Home Team Margin of Victory")
+
+mean(Home_Away_Difference$`Home Team Margin of Victory`)
+
+sd(Home_Away_Difference$`Home Team Margin of Victory`)
+
+confidence.interval.99 <- function(mean, sd, n){ c(mean - 2.58*sd/(n^.5),mean + 2.58*sd/(n^.5)) }
+
+confidence.interval.99(mean(Home_Away_Difference$`Home Team Margin of Victory`), sd(Home_Away_Difference$`Home Team Margin of Victory`), 210876)
+```
+
+The MLB average home field advantage is 0.254, and this falls within our 99% confidence intervals of 0.229 to 0.279.
+
+
+
+
+
+
+
+
+```{r, warning=FALSE}
+data.no.ties <- data.total[!(data.total$`Home Team Score`==data.total$`Visiting Team Score`),]
+
+Home.Team.Win <- ifelse(data.no.ties$`Home Team Score` > data.no.ties$`Visiting Team Score`, TRUE, FALSE)
+
+data.no.ties$Win <- Home.Team.Win 
+
+colnames(data.no.ties)[163]=c("Home Team Win?")
+
+data.no.ties$`Home Team Win?` <- as.factor(data.no.ties$`Home Team Win?`)
+
+for(i in 22:77) {
+    data.no.ties[,i] <- as.numeric(as.character(data.no.ties[,i]))
+}
+
+data.no.ties.25.years <- filter(data.no.ties, data.no.ties$Date > "1991-01-01")
+
+shuffled <- sample_n(data.no.ties.25.years, nrow(data.no.ties.25.years))
+
+split <- 0.8 * nrow(shuffled)
+
+data.no.ties.25.years.train <- shuffled[1 : split, ]
+
+data.no.ties.25.years.test <- shuffled[(split + 1) : nrow(shuffled), ]
+
+nb_class_best <- naiveBayes(`Home Team Win?` ~ `Home Team Score` + `Visiting Team Score`, data = data.no.ties.25.years.train)
+
+nb_predictions_best <- predict(nb_class_best, data.no.ties.25.years.test, type = 'class')
+
+mean(nb_predictions_best == data.no.ties.25.years.test$`Home Team Win?`)
+
+data.no.ties.25.years.250 <- head(data.no.ties.25.years.test, 250)
+
+set.seed(123)
+
+boruta.train <- Boruta(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Doubles` + `Visiting Team Doubles` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Walks` + `Visiting Team Walks` + `Home Team Intentional Walks` + `Visiting Team Intentional Walks` + `Home Team Strikeouts` + `Visiting Team Strikeouts` + `Home Team At-Bats` + `Visiting Team At-Bats` + `Visiting Team Errors` + `Home Team Errors` + `Visiting Team Double Plays` + `Home Team Double Plays` + `Visiting Team Assists` + `Home Team Assists` + `Home Team Left on Base` + `Visiting Team Left on Base` + `Home Team Stolen Bases` + `Visiting Team Stolen Bases`, data = data.no.ties.25.years.250, doTrace = 2)
+
+print(boruta.train)
+
+par(mar=c(10, 3, 3.5, 1))
+
+plot(boruta.train, xlab = "", xaxt = "n")
+
+lz<-lapply(1:ncol(boruta.train$ImpHistory),function(i) boruta.train$ImpHistory[is.finite(boruta.train$ImpHistory[,i]),i])
+
+names(lz) <- colnames(boruta.train$ImpHistory)
+
+Labels <- sort(sapply(lz,median))
+
+axis(side = 1,las=2,labels = names(Labels), at = 1:ncol(boruta.train$ImpHistory), cex.axis = 0.75)
+
+mtext(text="Importance of Features in Predicting a Home Win", side=3, line=.7, cex = 3)
+
+legend(1.57, 22.6, "Important", fill = "Green")
+
+legend(1.57, 17.6, "Unimportant", fill = "Red")
+
+legend(1.57, 12.6, "Undecided", fill = "Yellow")
+
+legend(1.57, 7.6, "Random Predictor", fill = "Blue")
+```
+
+This visualization was created using the boruta package, and it is a graphical depiction of the important features needed to predict a home-team win. We choose this schematic to use as it gives us a very clear idea of what features we should incorporate in our NaiveBayes prediction models. The blue are randomly generated points used as a basis of comparison, while the red whisker plots signify not useful features and useful features are represented in green. Yellow whisker plots represent the data points that boruta deemed to be undecided as to whether or not they are useful in building a model to predict a home-team win.
+
+How does boruta work? Loosely, it’s based on the idea that by adding randomness to a system and then collecting results from that system, one can reduce the misleading impact of randomness in the original sample by already taking it into account with your feature selection. Using a random forest classification algorithm, this provides an intrinsic measure of the importance of each feature that we can then compare to random permutations of (a selection of) the variables to test if it is higher than the scores from random variables (seen here in blue). 
+
+https://www.r-bloggers.com/feature-selection-all-relevant-selection-with-the-boruta-package/
+
+
+
+
+```{r, warning=FALSE}
+nb_class_best_no_cheating <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = data.no.ties.25.years.train)
+
+nb_predictions_best_no_cheating <- predict(nb_class_best_no_cheating, data.no.ties.25.years.test, type = 'class')
+
+mean(nb_predictions_best_no_cheating == data.no.ties.25.years.test$`Home Team Win?`)
+
+folds <- createFolds(data.no.ties.25.years$`Home Team Win?`, k = 5)
+
+train1 <- data.no.ties.25.years[c(folds[[2]], folds[[3]], folds[[4]], folds[[5]]), ]
+
+train2 <- data.no.ties.25.years[c(folds[[1]], folds[[3]], folds[[4]], folds[[5]]), ]
+
+train3 <- data.no.ties.25.years[c(folds[[2]], folds[[1]], folds[[4]], folds[[5]]), ]
+
+train4 <- data.no.ties.25.years[c(folds[[1]], folds[[3]], folds[[2]], folds[[5]]), ]
+
+train5 <- data.no.ties.25.years[c(folds[[2]], folds[[1]], folds[[3]], folds[[4]]), ]
+
+test1 <- data.no.ties.25.years[folds[[1]], ]
+
+test2 <- data.no.ties.25.years[folds[[2]], ]
+
+test3 <- data.no.ties.25.years[folds[[3]], ]
+
+test4 <- data.no.ties.25.years[folds[[4]], ]
+
+test5 <- data.no.ties.25.years[folds[[5]], ]
+
+nb_class_best_no_cheating_1 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = train1)
+
+nb_predictions_best_no_cheating_1 <- predict(nb_class_best_no_cheating_1, test1, type = 'class')
+
+mean(nb_predictions_best_no_cheating_1 == test1$`Home Team Win?`)
+
+nb_class_best_no_cheating_2 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = train2)
+
+nb_predictions_best_no_cheating_2 <- predict(nb_class_best_no_cheating_2, test2, type = 'class')
+
+mean(nb_predictions_best_no_cheating_2 == test2$`Home Team Win?`)
+
+nb_class_best_no_cheating_3 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = train3)
+
+nb_predictions_best_no_cheating_3 <- predict(nb_class_best_no_cheating_3, test3, type = 'class')
+
+mean(nb_predictions_best_no_cheating_3 == test3$`Home Team Win?`)
+
+nb_class_best_no_cheating_4 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = train4)
+
+nb_predictions_best_no_cheating_4 <- predict(nb_class_best_no_cheating_4, test4, type = 'class')
+
+mean(nb_predictions_best_no_cheating_4 == test4$`Home Team Win?`)
+
+nb_class_best_no_cheating_5 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits` + `Home Team Homeruns` + `Visiting Team Homeruns` + `Home Team Intentional Walks` + `Visiting Team Walks` + `Home Team Strikeouts` + `Home Team At-Bats` + `Visiting Team Errors` + `Visiting Team Double Plays` + `Visiting Team Assists` + `Visiting Team Strikeouts`, data = train5)
+
+nb_predictions_best_no_cheating_5 <- predict(nb_class_best_no_cheating_5, test5, type = 'class')
+
+mean(nb_predictions_best_no_cheating_5 == test5$`Home Team Win?`)
+
+nb_class_simple <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = data.no.ties.25.years.train)
+
+nb_predictions_simple <- predict(nb_class_simple, data.no.ties.25.years.test, type = 'class')
+
+mean(nb_predictions_simple == data.no.ties.25.years.test$`Home Team Win?`)
+
+nb_class_simple_1 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = train1)
+
+nb_predictions_simple_1 <- predict(nb_class_simple_1, test1, type = 'class')
+
+mean(nb_predictions_simple_1 == test1$`Home Team Win?`)
+
+nb_class_simple_2 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = train2)
+
+nb_predictions_simple_2 <- predict(nb_class_simple_2, test2, type = 'class')
+
+mean(nb_predictions_simple_2 == test2$`Home Team Win?`)
+
+nb_class_simple_3 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = train3)
+
+nb_predictions_simple_3 <- predict(nb_class_simple_3, test3, type = 'class')
+
+mean(nb_predictions_simple_3 == test3$`Home Team Win?`)
+
+nb_class_simple_4 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = train4)
+
+nb_predictions_simple_4 <- predict(nb_class_simple_4, test4, type = 'class')
+
+mean(nb_predictions_simple_4 == test4$`Home Team Win?`)
+
+nb_class_simple_5 <- naiveBayes(`Home Team Win?` ~ `Home Team Hits` + `Visiting Team Hits`, data = train5)
+
+nb_predictions_simple_5 <- predict(nb_class_simple_5, test5, type = 'class')
+
+mean(nb_predictions_simple_5 == test5$`Home Team Win?`)
+```
+
+
+
+
+
+```{r, warning=FALSE}
+data.runs.as.factor.25 <- data.no.ties.25.years
+
+data.runs.as.factor.25$`Visiting Team Score` <- as.factor(data.runs.as.factor.25$`Visiting Team Score`)
+
+shuffled.runs <- sample_n(data.runs.as.factor.25, nrow(data.runs.as.factor.25))
+
+split.runs <- 0.8 * nrow(shuffled.runs)
+
+data.runs.as.factor.25.train <- shuffled.runs[1 : split.runs, ]
+
+data.runs.as.factor.25.test <- shuffled.runs[(split.runs + 1) : nrow(shuffled.runs), ]
+
+nb_class_runs_best <- naiveBayes(`Visiting Team Score` ~ `Visiting Team RBI` + `Home Team Errors` + `Home Team Team Earned Runs`, data = data.runs.as.factor.25.train)
+
+nb_predictions_runs_best <- predict(nb_class_runs_best, data.runs.as.factor.25.test, type = 'class')
+
+mean(nb_predictions_runs_best == data.runs.as.factor.25.test$`Visiting Team Score`)
+
+nb_class_runs_best_no_cheating <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = data.runs.as.factor.25.train)
+
+nb_predictions_runs_best_no_cheating <- predict(nb_class_runs_best_no_cheating, data.runs.as.factor.25.test, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating == data.runs.as.factor.25.test$`Visiting Team Score`)
+
+folds.1 <- createFolds(data.runs.as.factor.25$`Home Team Score`, k = 5)
+
+train.1 <- data.runs.as.factor.25[c(folds.1[[2]], folds.1[[3]], folds.1[[4]], folds.1[[5]]), ]
+
+train.2 <- data.runs.as.factor.25[c(folds.1[[1]], folds.1[[3]], folds.1[[4]], folds.1[[5]]), ]
+
+train.3 <- data.runs.as.factor.25[c(folds.1[[2]], folds.1[[1]], folds.1[[4]], folds.1[[5]]), ]
+
+train.4 <- data.runs.as.factor.25[c(folds.1[[1]], folds.1[[3]], folds.1[[2]], folds.1[[5]]), ]
+
+train.5 <- data.runs.as.factor.25[c(folds.1[[2]], folds.1[[1]], folds.1[[3]], folds.1[[4]]), ]
+
+test.1 <- data.runs.as.factor.25[folds.1[[1]], ]
+
+test.2 <- data.runs.as.factor.25[folds.1[[2]], ]
+
+test.3 <- data.runs.as.factor.25[folds.1[[3]], ]
+
+test.4 <- data.runs.as.factor.25[folds.1[[4]], ]
+
+test.5 <- data.runs.as.factor.25[folds.1[[5]], ]
+
+nb_class_runs_best_no_cheating_1 <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = train.1)
+
+nb_predictions_runs_best_no_cheating_1 <- predict(nb_class_runs_best_no_cheating_1, test.1, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating_1 == test.1$`Visiting Team Score`)
+
+nb_class_runs_best_no_cheating_2 <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = train.2)
+
+nb_predictions_runs_best_no_cheating_2 <- predict(nb_class_runs_best_no_cheating_2, test.2, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating_2 == test.2$`Visiting Team Score`)
+
+nb_class_runs_best_no_cheating_3 <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = train.3)
+
+nb_predictions_runs_best_no_cheating_3 <- predict(nb_class_runs_best_no_cheating_3, test.3, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating_3 == test.3$`Visiting Team Score`)
+
+nb_class_runs_best_no_cheating_4 <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = train.4)
+
+nb_predictions_runs_best_no_cheating_4 <- predict(nb_class_runs_best_no_cheating_4, test.4, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating_4 == test.4$`Visiting Team Score`)
+
+nb_class_runs_best_no_cheating_5 <- naiveBayes(`Visiting Team Score` ~ `Home Team Pitchers Used` + `Visiting Team Hits` + `Visiting Team Walks` + `Home Team Errors`, data = train.5)
+
+nb_predictions_runs_best_no_cheating_5 <- predict(nb_class_runs_best_no_cheating_5, test.5, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating_5 == test.5$`Visiting Team Score`)
+```
+
+
+
+
+
+
+
+
+
+```{r, warning=FALSE}
+Score.Factor <- ifelse(data.no.ties.25.years$`Home Team Score` < 3, "Low", ifelse(data.no.ties.25.years$`Home Team Score` > 2 & data.no.ties.25.years$`Home Team Score` < 7, "Average", ifelse(data.no.ties.25.years$`Home Team Score` > 6 & data.no.ties.25.years$`Home Team Score` < 10, "High", "Very High")))
+
+Score.Factor <- as.factor(Score.Factor)
+
+data.runs.segmented.25 <- data.runs.as.factor.25
+
+data.runs.segmented.25$`Home Team Score` <- Score.Factor
+
+shuffled.runs.segmented <- sample_n(data.runs.segmented.25, nrow(data.runs.segmented.25))
+
+split.runs.segmented <- 0.8 * nrow(shuffled.runs.segmented)
+
+data.runs.segmented.25.train <- shuffled.runs.segmented[1 : split.runs.segmented, ]
+
+data.runs.segmented.25.test <- shuffled.runs.segmented[(split.runs.segmented + 1) : nrow(shuffled.runs.segmented), ]
+
+data.runs.segmented.500 <- head(data.runs.segmented.25.test, 500)
+
+set.seed(120)
+
+boruta.train.runs <- Boruta(`Home Team Score` ~ `Home Team At-Bats` + `Home Team Hits` + `Home Team Doubles` + `Home Team Triples` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Intentional Walks` + `Home Team Strikeouts` + `Home Team Stolen Bases` + `Visiting Team Double Plays` + `Visiting Team Errors` + `Visiting Team Pitchers Used`, data = data.runs.segmented.500, doTrace = 2)
+
+print(boruta.train.runs)
+
+par(mar=c(10, 3, 3.5, 1))
+
+plot(boruta.train.runs, xlab = "", xaxt = "n")
+
+lz.runs<-lapply(1:ncol(boruta.train.runs$ImpHistory),function(i) boruta.train.runs$ImpHistory[is.finite(boruta.train.runs$ImpHistory[,i]),i])
+
+names(lz.runs) <- colnames(boruta.train.runs$ImpHistory)
+
+Labels.runs <- sort(sapply(lz.runs,median))
+
+axis(side = 1,las=2,labels = names(Labels.runs), at = 1:ncol(boruta.train.runs$ImpHistory), cex.axis = 0.75)
+
+mtext(text="Importance of Features in Predicting Home Score", side=3, line=.7, cex = 3)
+
+legend(1.57, 48.6, "Important", fill = "Green")
+
+legend(1.57, 38.6, "Unimportant", fill = "Red")
+
+legend(1.57, 28.6, "Undecided", fill = "Yellow")
+
+legend(1.57, 18.6, "Random Predictor", fill = "Blue")
+```
+
+This visualization was created using the boruta package, and it is a graphical depiction of the important features needed to predict a home team score. We choose this schematic to use as it gives us a very clear idea of what features we should incorporate in our NaiveBayes prediction model for score prediction. The blue are randomly generated points used as a basis of comparison, while the red whisker plots signify not useful features and useful features are represented in green. 
+
+
+
+
+
+
+
+```{r, warning=FALSE}
+nb_class_runs_segmented_best <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = data.runs.segmented.25.train)
+
+nb_predictions_runs_segmented_best <- predict(nb_class_runs_segmented_best, data.runs.segmented.25.test, type = 'class')
+
+mean(nb_predictions_runs_segmented_best == data.runs.segmented.25.test$`Home Team Score`)
+
+folds_1 <- createFolds(data.runs.segmented.25$`Home Team Score`, k = 5)
+
+train_1 <- data.runs.segmented.25[c(folds_1[[2]], folds_1[[3]], folds_1[[4]], folds_1[[5]]), ]
+
+train_2 <- data.runs.segmented.25[c(folds_1[[1]], folds_1[[3]], folds_1[[4]], folds_1[[5]]), ]
+
+train_3 <- data.runs.segmented.25[c(folds_1[[2]], folds_1[[1]], folds_1[[4]], folds_1[[5]]), ]
+
+train_4 <- data.runs.segmented.25[c(folds_1[[1]], folds_1[[3]], folds_1[[2]], folds_1[[5]]), ]
+
+train_5 <- data.runs.segmented.25[c(folds_1[[2]], folds_1[[1]], folds_1[[3]], folds_1[[4]]), ]
+
+test_1 <- data.runs.segmented.25[folds_1[[1]], ]
+
+test_2 <- data.runs.segmented.25[folds_1[[2]], ]
+
+test_3 <- data.runs.segmented.25[folds_1[[3]], ]
+
+test_4 <- data.runs.segmented.25[folds_1[[4]], ]
+
+test_5 <- data.runs.segmented.25[folds_1[[5]], ]
+
+nb_class_runs_best_no_cheating.1 <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = train_1)
+
+nb_predictions_runs_best_no_cheating.1 <- predict(nb_class_runs_best_no_cheating.1, test_1, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating.1 == test_1$`Home Team Score`)
+
+nb_class_runs_best_no_cheating.2 <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = train_2)
+
+nb_predictions_runs_best_no_cheating.2 <- predict(nb_class_runs_best_no_cheating.2, test_2, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating.2 == test_2$`Home Team Score`)
+
+nb_class_runs_best_no_cheating.3 <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = train_3)
+
+nb_predictions_runs_best_no_cheating.3 <- predict(nb_class_runs_best_no_cheating.3, test_3, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating.3 == test_3$`Home Team Score`)
+
+nb_class_runs_best_no_cheating.4 <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = train_4)
+
+nb_predictions_runs_best_no_cheating.4 <- predict(nb_class_runs_best_no_cheating.4, test_4, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating.4 == test_4$`Home Team Score`)
+
+nb_class_runs_best_no_cheating.5 <- naiveBayes(`Home Team Score` ~ `Home Team Hits` + `Home Team Homeruns` + `Home Team Walks` + `Home Team Doubles` + `Visiting Team Errors`, data = train_5)
+
+nb_predictions_runs_best_no_cheating.5 <- predict(nb_class_runs_best_no_cheating.5, test_5, type = 'class')
+
+mean(nb_predictions_runs_best_no_cheating.5 == test_5$`Home Team Score`)
+```
+
+
+
+
+
+
+```{r, warning=FALSE}
+GL2015$`Home Team Batting_Average` <- (GL2015$`Home Team Hits`)/(GL2015$`Home Team At-Bats`)
+
+GL2015$`Visiting Team Batting_Average` <- (GL2015$`Visiting Team Hits`)/(GL2015$`Visiting Team At-Bats`)
+
+GL2015$`Home Team On_Base_Percentage` <- (GL2015$`Home Team Hits` + GL2015$`Home Team Walks` + GL2015$`Home Team Hit-By-Pitch`)/(GL2015$`Home Team At-Bats` + GL2015$`Home Team Walks` + GL2015$`Home Team Hit-By-Pitch` + GL2015$`Home Team Sacrafice Flies`)
+
+GL2015$`Visiting Team On_Base_Percentage` <- (GL2015$`Visiting Team Hits` + GL2015$`Visiting Team Walks` + GL2015$`Visiting Team Hit-By-Pitch`)/(GL2015$`Visiting Team At-Bats` + GL2015$`Visiting Team Walks` + GL2015$`Visiting Team Hit-By-Pitch` + GL2015$`Visiting Team Sacrafice Flies`)
+
+GL2015$`Home Team Slugging_Percentage` <- (GL2015$`Home Team Hits` + GL2015$`Home Team Doubles` + 2*(GL2015$`Home Team Triples`) + 3*(GL2015$`Home Team Homeruns`))/(GL2015$`Home Team At-Bats`)
+
+GL2015$`Visiting Team Slugging_Percentage` <- (GL2015$`Visiting Team Hits` + GL2015$`Visiting Team Doubles` + 2*(GL2015$`Visiting Team Triples`) + 3*(GL2015$`Visiting Team Homeruns`))/(GL2015$`Visiting Team At-Bats`)
+
+GL2015$`Home Team OPS` <- (GL2015$`Home Team On_Base_Percentage`) + (GL2015$`Home Team Slugging_Percentage`)
+
+GL2015$`Visiting Team OPS` <- (GL2015$`Visiting Team On_Base_Percentage`) + (GL2015$`Visiting Team Slugging_Percentage`)
+
+for (i in Team.Names) {
+    home.team.2015 <- paste(i, "HOME 2015", sep = " ")
+    assign(home.team.2015, filter(GL2015, GL2015$`Home Team` == i))
+}
+
+for (i in Team.Names) {
+    away.team.2015 <- paste(i, "AWAY 2015", sep = " ")
+    assign(away.team.2015, filter(GL2015, GL2015$`Visiting Team` == i))
+}
+
+Team.Names.Home.2015 <- Team.Names.Home
+
+Team.Names.Away.2015 <- Team.Names.Away
+
+Team.Names.Home.2015[-length(Team.Names.Home)] <- paste0(Team.Names.Home[-length(Team.Names.Home)], ' 2015')
+
+Team.Names.Away.2015[-length(Team.Names.Away)] <- paste0(Team.Names.Away[-length(Team.Names.Away)], ' 2015')
+
+St.Louis.Home.2015 <- "Cardinals HOME 2015"
+
+Team.Names.Home.2015[30] <- St.Louis.Home.2015
+
+St.Louis.Away.2015 <- "Cardinals AWAY 2015"
+
+Team.Names.Away.2015[30] <- St.Louis.Away.2015
+
+for (i in Team.Names.Home.2015) {
+    mean.Batting_Average.home.2015 <- paste(i, "MEAN Batting_Average", sep = " ")
+    d=get(i)
+    assign(mean.Batting_Average.home.2015, mean(d$`Home Team Batting_Average`))
+}
+
+Home.Mean.Batting_Average.2015.List <- lapply ( ls(patt='HOME 2015 MEAN Batting_Average'), get)
+
+Home.Mean.Batting_Average.2015 <- data.matrix(Home.Mean.Batting_Average.2015.List)
+
+for (i in Team.Names.Away.2015) {
+    mean.Batting_Average.away.2015 <- paste(i, "MEAN Batting_Average", sep = " ")
+    d=get(i)
+    assign(mean.Batting_Average.away.2015, mean(d$`Visiting Team Batting_Average`))
+}
+
+Away.Mean.Batting_Average.2015.List <- lapply ( ls(patt='AWAY 2015 MEAN Batting_Average'), get)
+
+Away.Mean.Batting_Average.2015 <- data.matrix(Away.Mean.Batting_Average.2015.List)
+
+for (i in Team.Names.Home.2015) {
+    mean.Slugging_Percentage.home.2015 <- paste(i, "MEAN Slugging_Percentage", sep = " ")
+    d=get(i)
+    assign(mean.Slugging_Percentage.home.2015, mean(d$`Home Team Slugging_Percentage`))
+}
+
+Home.Mean.Slugging_Percentage.2015.List <- lapply ( ls(patt='HOME 2015 MEAN Slugging_Percentage'), get)
+
+Home.Mean.Slugging_Percentage.2015 <- data.matrix(Home.Mean.Slugging_Percentage.2015.List)
+
+for (i in Team.Names.Away.2015) {
+    mean.Slugging_Percentage.away.2015 <- paste(i, "MEAN Slugging_Percentage", sep = " ")
+    d=get(i)
+    assign(mean.Slugging_Percentage.away.2015, mean(d$`Visiting Team Slugging_Percentage`))
+}
+
+Away.Mean.Slugging_Percentage.2015.List <- lapply ( ls(patt='AWAY 2015 MEAN Slugging_Percentage'), get)
+
+Away.Mean.Slugging_Percentage.2015 <- data.matrix(Away.Mean.Slugging_Percentage.2015.List)
+
+for (i in Team.Names.Home.2015) {
+    mean.OPS.home.2015 <- paste(i, "MEAN OPS", sep = " ")
+    d=get(i)
+    assign(mean.OPS.home.2015, mean(d$`Home Team OPS`))
+}
+
+Home.Mean.OPS.2015.List <- lapply ( ls(patt='HOME 2015 MEAN OPS'), get)
+
+Home.Mean.OPS.2015 <- data.matrix(Home.Mean.OPS.2015.List)
+
+for (i in Team.Names.Away.2015) {
+    mean.OPS.away.2015 <- paste(i, "MEAN OPS", sep = " ")
+    d=get(i)
+    assign(mean.OPS.away.2015, mean(d$`Visiting Team OPS`))
+}
+
+Away.Mean.OPS.2015.List <- lapply ( ls(patt='AWAY 2015 MEAN OPS'), get)
+
+Away.Mean.OPS.2015 <- data.matrix(Away.Mean.OPS.2015.List)
+
+for (i in Team.Names.Home.2015) {
+    mean.On_Base_Percentage.home.2015 <- paste(i, "MEAN On_Base_Percentage", sep = " ")
+    d=get(i)
+    assign(mean.On_Base_Percentage.home.2015, mean(d$`Home Team On_Base_Percentage`))
+}
+
+Home.Mean.On_Base_Percentage.2015.List <- lapply ( ls(patt='HOME 2015 MEAN On_Base_Percentage'), get)
+
+Home.Mean.On_Base_Percentage.2015 <- data.matrix(Home.Mean.On_Base_Percentage.2015.List)
+
+for (i in Team.Names.Away.2015) {
+    mean.On_Base_Percentage.away.2015 <- paste(i, "MEAN On_Base_Percentage", sep = " ")
+    d=get(i)
+    assign(mean.On_Base_Percentage.away.2015, mean(d$`Visiting Team On_Base_Percentage`))
+}
+
+Away.Mean.On_Base_Percentage.2015.List <- lapply ( ls(patt='AWAY 2015 MEAN On_Base_Percentage'), get)
+
+Away.Mean.On_Base_Percentage.2015 <- data.matrix(Away.Mean.On_Base_Percentage.2015.List)
+
+for (i in Team.Names.Home.2015) {
+    mean.score.home.2015 <- paste(i, "MEAN SCORE", sep = " ")
+    d=get(i)
+    assign(mean.score.home.2015, mean(d$`Home Team Score`))
+}
+
+Home.Mean.score.2015.List <- lapply ( ls(patt='HOME 2015 MEAN SCORE'), get)
+
+Home.Mean.score.2015 <- data.matrix(Home.Mean.score.2015.List)
+
+for (i in Team.Names.Away.2015) {
+    mean.score.away.2015 <- paste(i, "MEAN SCORE", sep = " ")
+    d=get(i)
+    assign(mean.score.away.2015, mean(d$`Visiting Team Score`))
+}
+
+Away.Mean.score.2015.List <- lapply ( ls(patt='AWAY 2015 MEAN SCORE'), get)
+
+Away.Mean.score.2015 <- data.matrix(Away.Mean.score.2015.List)
+
+Home.Mean.Batting_Average.2015 <- as.data.frame(Home.Mean.Batting_Average.2015)
+
+Home.Mean.Slugging_Percentage.2015 <- as.data.frame(Home.Mean.Slugging_Percentage.2015)
+
+Home.Mean.On_Base_Percentage.2015 <- as.data.frame(Home.Mean.On_Base_Percentage.2015)
+
+Home.Mean.OPS.2015 <- as.data.frame(Home.Mean.OPS.2015)
+
+Home.Mean.score.2015 <- as.data.frame(Home.Mean.score.2015)
+
+Away.Mean.Batting_Average.2015 <- as.data.frame(Away.Mean.Batting_Average.2015)
+
+Away.Mean.Slugging_Percentage.2015 <- as.data.frame(Away.Mean.Slugging_Percentage.2015)
+
+Away.Mean.On_Base_Percentage.2015 <- as.data.frame(Away.Mean.On_Base_Percentage.2015)
+
+Away.Mean.OPS.2015 <- as.data.frame(Away.Mean.OPS.2015)
+
+Away.Mean.score.2015 <- as.data.frame(Away.Mean.score.2015)
+
+Mean.Offense <- matrix(0, ncol = 16, nrow = 30)
+
+Mean.Offense <- as.data.frame(Mean.Offense)
+
+Mean.Offense$V1 <- Team.Names.Alphabetical
+
+Mean.Offense$V7 <- as.numeric(Home.Mean.Batting_Average.2015$V1)
+
+Mean.Offense$V8 <- as.numeric(Away.Mean.Batting_Average.2015$V1)
+
+Mean.Offense$V9 <- as.numeric(Home.Mean.Slugging_Percentage.2015$V1)
+
+Mean.Offense$V10 <- as.numeric(Away.Mean.Slugging_Percentage.2015$V1)
+
+Mean.Offense$V11 <- as.numeric(Home.Mean.On_Base_Percentage.2015$V1)
+
+Mean.Offense$V12 <- as.numeric(Away.Mean.On_Base_Percentage.2015$V1)
+
+Mean.Offense$V13 <- as.numeric(Home.Mean.OPS.2015$V1)
+
+Mean.Offense$V14 <- as.numeric(Away.Mean.OPS.2015$V1)
+
+Mean.Offense$V15 <- as.numeric(Home.Mean.score.2015$V1)
+
+Mean.Offense$V16 <- as.numeric(Away.Mean.score.2015$V1)
+
+colnames(Mean.Offense)[1:16]=c("Team", "Batting Average", "Slugging Percentage", "On Base Percentage", "OPS", "Score", "Home Mean Batting Average", "Away Mean Batting Average", "Home Mean Slugging Percentage", "Away Mean Slugging Percentage", "Home Mean On Base Percentage", "Away Mean On Base Percentage", "Home Mean OPS", "Away Mean OPS", "Home Mean Score", "Away Mean Score")
+
+Mean.Offense$`Batting Average` <- (Mean.Offense$`Home Mean Batting Average` + Mean.Offense$`Away Mean Batting Average`)/2
+
+Mean.Offense$`Slugging Percentage` <- (Mean.Offense$`Home Mean Slugging Percentage` + Mean.Offense$`Away Mean Slugging Percentage`)/2
+
+Mean.Offense$`On Base Percentage` <- (Mean.Offense$`Home Mean On Base Percentage` + Mean.Offense$`Away Mean On Base Percentage`)/2
+
+Mean.Offense$`OPS` <- (Mean.Offense$`Home Mean OPS` + Mean.Offense$`Away Mean OPS`)/2
+
+Mean.Offense$`Score` <- (Mean.Offense$`Home Mean Score` + Mean.Offense$`Away Mean Score`)/2
+
+Mean.Offense <- Mean.Offense[!(Mean.Offense$`Team`=="Toronto Blue Jays"),]
+
+Mean.Offense <- Mean.Offense[!(Mean.Offense$`Team`=="Atlanta Braves"),]
+
+Mean.Offense <- Mean.Offense[!(Mean.Offense$`Team`=="San Diego Padres"),]
+
+cor(Mean.Offense$Score, Mean.Offense[2:5])
+
+par(mar=c(3, 1, 2.5, 0))
+parcoord(Mean.Offense[, c(2, 3, 4, 5, 6)], col=ifelse(Mean.Offense$`Score` > 4.31, 3, ifelse(Mean.Offense$`Score` < 4.07, 2, 1)), var.label = TRUE, lwd = 15)
+mtext(text="Offensive Variables Determining Score", side=3, line=-.1, cex = 3)
+```
+
+This visualization is a parallel coordinate plot which shows the offensive data from the year 2015. Our intentions with the visualization was to find any potential trends that existed between some common offensive baseball data points and a team’s ranking as high, low or average scoring. Moving from left to right, we see along the x-axis a series of data point labels that we thought were important to include in our analysis (batting average, slugging percentage, on base percentage and OPS).  Each bar is representative of a team in 2015, and the colors are broken into three bins that separate teams into three scoring levels: low scoring (red), average scoring (black) and high scoring (green). Examining the graph from left to right with a focus on the green band, we see that in order to be considered a high scoring team it is important to have a high batting average, slugging percentage, on base percentage and OPS (on base percentage and slugging combined) rate to be categorized as high scoring. Conversely, teams that are frequently in the lower percentile of these features (red) display a lower scoring average.  This visualization is useful in being able to determine what aspects of improvement should be made (offensively) in a team to raise their scoring frequency. 
+
+
+
+
+
+
+
+
+```{r, warning=FALSE}
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("New York Yankees", Team.Names.AL)]
+
+data.25.years <- filter(data.total, data.total$Date > "1991-01-01")
+
+for (i in Team.Names.AL) {
+    years.25 <- paste(i, "Home 25 Years", sep = " ")
+    assign(years.25, filter(data.25.years, data.25.years$`Home Team` == i & data.25.years$`Visiting Team League` == "AL"))
+}
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+Toronto.Home.25.Years <- "Toronto Blue Jays Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- Toronto.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    average.attendance <- paste(i, "AVERAGE ATTENDANCE", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+Team.Names.AL.Home.25.Years.Attendance <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.Attendance[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' AVERAGE ATTENDANCE')
+
+Toronto.Home.25.Years.Average.Attendace <- "Toronto Blue Jays Home 25 Years AVERAGE ATTENDANCE"
+
+Team.Names.AL.Home.25.Years.Attendance[13] <- Toronto.Home.25.Years.Average.Attendace
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.yankees <- paste(i, "VS Yankees", sep = " ")
+    d=get(i)
+    assign(vs.yankees, filter(d, d$`Visiting Team` == "New York Yankees"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Yankees <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Yankees[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Yankees')
+
+Toronto.Home.25.Years.VS.Yankees <- "Toronto Blue Jays Home 25 Years VS Yankees"
+
+Team.Names.AL.Home.25.Years.VS.Yankees[13] <- Toronto.Home.25.Years.VS.Yankees
+
+for (i in Team.Names.AL.Home.25.Years.VS.Yankees) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+`New York Yankees Home 25 Years` <- filter(data.25.years, data.25.years$`Home Team` == "New York Yankees" & data.25.years$`Visiting Team League` == "AL")
+
+`New York Yankees Home 25 Years AVERAGE ATTENDANCE` <- mean(na.omit(`New York Yankees Home 25 Years`$`Attendance`))
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-9]
+
+dlist.vs.yankees <- lapply ( ls(patt='VS Yankees Average'), get)
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Yankees.Attendance <- do.call("rbind", dlist.vs.yankees)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Yankees.Attendance <- as.data.frame(Yankees.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Yankees.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Yankees.Attendance <- as.data.frame(VS.Yankees.Attendance)
+
+VS.Yankees.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Yankees.Attendance$V2 <- Average.Attendance$V1
+
+VS.Yankees.Attendance$V3 <- Yankees.Attendance$V1
+
+VS.Yankees.Attendance$V4 <- (VS.Yankees.Attendance$V3 - VS.Yankees.Attendance$V2)/VS.Yankees.Attendance$V2*100
+
+colnames(VS.Yankees.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Yankees", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Baltimore Orioles", Team.Names.AL)]
+
+for (i in Team.Names.AL) {
+    years.25 <- paste(i, "Home 25 Years", sep = " ")
+    assign(years.25, filter(data.25.years, data.25.years$`Home Team` == i))
+}
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    average.attendance <- paste(i, "AVERAGE ATTENDANCE", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+Team.Names.AL.Home.25.Years.Attendance <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.Attendance[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' AVERAGE ATTENDANCE')
+
+NY.Home.25.Years.Average.Attendace <- "New York Yankees Home 25 Years AVERAGE ATTENDANCE"
+
+Team.Names.AL.Home.25.Years.Attendance[13] <- NY.Home.25.Years.Average.Attendace
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Orioles <- paste(i, "VS Orioles", sep = " ")
+    d=get(i)
+    assign(vs.Orioles, filter(d, d$`Visiting Team` == "Baltimore Orioles"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Orioles <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Orioles[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Orioles')
+
+NY.Home.25.Years.VS.Orioles <- "New York Yankees Home 25 Years VS Orioles"
+
+Team.Names.AL.Home.25.Years.VS.Orioles[13] <- NY.Home.25.Years.VS.Orioles
+
+for (i in Team.Names.AL.Home.25.Years.VS.Orioles) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-1]
+
+dlist.vs.Orioles <- lapply ( ls(patt='VS Orioles Average'), get)
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Orioles.Attendance <- do.call("rbind", dlist.vs.Orioles)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Orioles.Attendance <- as.data.frame(Orioles.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Orioles.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Orioles.Attendance <- as.data.frame(VS.Orioles.Attendance)
+
+VS.Orioles.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Orioles.Attendance$V2 <- Average.Attendance$V1
+
+VS.Orioles.Attendance$V3 <- Orioles.Attendance$V1
+
+VS.Orioles.Attendance$V4 <- (VS.Orioles.Attendance$V3 - VS.Orioles.Attendance$V2)/VS.Orioles.Attendance$V2*100
+
+colnames(VS.Orioles.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Orioles", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Toronto Blue Jays", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Blue.Jays <- paste(i, "VS Blue.Jays", sep = " ")
+    d=get(i)
+    assign(vs.Blue.Jays, filter(d, d$`Visiting Team` == "Toronto Blue Jays"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Blue.Jays <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Blue.Jays[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Blue.Jays')
+
+NY.Home.25.Years.VS.Blue.Jays <- "New York Yankees Home 25 Years VS Blue.Jays"
+
+Team.Names.AL.Home.25.Years.VS.Blue.Jays[13] <- NY.Home.25.Years.VS.Blue.Jays
+
+for (i in Team.Names.AL.Home.25.Years.VS.Blue.Jays) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-14]
+
+dlist.vs.Blue.Jays <- lapply ( ls(patt='VS Blue.Jays Average'), get)
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Blue.Jays.Attendance <- do.call("rbind", dlist.vs.Blue.Jays)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Blue.Jays.Attendance <- as.data.frame(Blue.Jays.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Blue.Jays.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Blue.Jays.Attendance <- as.data.frame(VS.Blue.Jays.Attendance)
+
+VS.Blue.Jays.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Blue.Jays.Attendance$V2 <- Average.Attendance$V1
+
+VS.Blue.Jays.Attendance$V3 <- Blue.Jays.Attendance$V1
+
+VS.Blue.Jays.Attendance$V4 <- (VS.Blue.Jays.Attendance$V3 - VS.Blue.Jays.Attendance$V2)/VS.Blue.Jays.Attendance$V2*100
+
+colnames(VS.Blue.Jays.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Blue.Jays", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Boston Red Sox", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Red.Sox <- paste(i, "VS Red.Sox", sep = " ")
+    d=get(i)
+    assign(vs.Red.Sox, filter(d, d$`Visiting Team` == "Boston Red Sox"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Red.Sox <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Red.Sox[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Red.Sox')
+
+NY.Home.25.Years.VS.Red.Sox <- "New York Yankees Home 25 Years VS Red.Sox"
+
+Team.Names.AL.Home.25.Years.VS.Red.Sox[13] <- NY.Home.25.Years.VS.Red.Sox
+
+for (i in Team.Names.AL.Home.25.Years.VS.Red.Sox) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-2]
+
+dlist.vs.Red.Sox <- lapply ( ls(patt='VS Red.Sox Average'), get)
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Red.Sox.Attendance <- do.call("rbind", dlist.vs.Red.Sox)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Red.Sox.Attendance <- as.data.frame(Red.Sox.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Red.Sox.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Red.Sox.Attendance <- as.data.frame(VS.Red.Sox.Attendance)
+
+VS.Red.Sox.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Red.Sox.Attendance$V2 <- Average.Attendance$V1
+
+VS.Red.Sox.Attendance$V3 <- Red.Sox.Attendance$V1
+
+VS.Red.Sox.Attendance$V4 <- (VS.Red.Sox.Attendance$V3 - VS.Red.Sox.Attendance$V2)/VS.Red.Sox.Attendance$V2*100
+
+colnames(VS.Red.Sox.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Red.Sox", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Tampa Bay Rays", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Rays <- paste(i, "VS Rays", sep = " ")
+    d=get(i)
+    assign(vs.Rays, filter(d, d$`Visiting Team` == "Tampa Bay Rays"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Rays <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Rays[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Rays')
+
+NY.Home.25.Years.VS.Rays <- "New York Yankees Home 25 Years VS Rays"
+
+Team.Names.AL.Home.25.Years.VS.Rays[13] <- NY.Home.25.Years.VS.Rays
+
+for (i in Team.Names.AL.Home.25.Years.VS.Rays) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-12]
+
+dlist.vs.Rays <- lapply ( ls(patt='VS Rays Average'), get)
+
+dlist.vs.Rays <- dlist.vs.Rays
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Rays.Attendance <- do.call("rbind", dlist.vs.Rays)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Rays.Attendance <- as.data.frame(Rays.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Rays.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Rays.Attendance <- as.data.frame(VS.Rays.Attendance)
+
+VS.Rays.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Rays.Attendance$V2 <- Average.Attendance$V1
+
+VS.Rays.Attendance$V3 <- Rays.Attendance$V1
+
+VS.Rays.Attendance$V4 <- (VS.Rays.Attendance$V3 - VS.Rays.Attendance$V2)/VS.Rays.Attendance$V2*100
+
+colnames(VS.Rays.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Rays", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Oakland Athletics", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Athletics <- paste(i, "VS Athletics", sep = " ")
+    d=get(i)
+    assign(vs.Athletics, filter(d, d$`Visiting Team` == "Oakland Athletics"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Athletics <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Athletics[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Athletics')
+
+NY.Home.25.Years.VS.Athletics <- "New York Yankees Home 25 Years VS Athletics"
+
+Team.Names.AL.Home.25.Years.VS.Athletics[13] <- NY.Home.25.Years.VS.Athletics
+
+for (i in Team.Names.AL.Home.25.Years.VS.Athletics) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-10]
+
+dlist.vs.Athletics <- lapply ( ls(patt='VS Athletics Average'), get)
+
+dlist.vs.Athletics <- dlist.vs.Athletics
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Athletics.Attendance <- do.call("rbind", dlist.vs.Athletics)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Athletics.Attendance <- as.data.frame(Athletics.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Athletics.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Athletics.Attendance <- as.data.frame(VS.Athletics.Attendance)
+
+VS.Athletics.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Athletics.Attendance$V2 <- Average.Attendance$V1
+
+VS.Athletics.Attendance$V3 <- Athletics.Attendance$V1
+
+VS.Athletics.Attendance$V4 <- (VS.Athletics.Attendance$V3 - VS.Athletics.Attendance$V2)/VS.Athletics.Attendance$V2*100
+
+colnames(VS.Athletics.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Athletics", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Seattle Mariners", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Mariners <- paste(i, "VS Mariners", sep = " ")
+    d=get(i)
+    assign(vs.Mariners, filter(d, d$`Visiting Team` == "Seattle Mariners"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Mariners <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Mariners[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Mariners')
+
+NY.Home.25.Years.VS.Mariners <- "New York Yankees Home 25 Years VS Mariners"
+
+Team.Names.AL.Home.25.Years.VS.Mariners[13] <- NY.Home.25.Years.VS.Mariners
+
+for (i in Team.Names.AL.Home.25.Years.VS.Mariners) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-11]
+
+dlist.vs.Mariners <- lapply ( ls(patt='VS Mariners Average'), get)
+
+dlist.vs.Mariners <- dlist.vs.Mariners
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Mariners.Attendance <- do.call("rbind", dlist.vs.Mariners)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Mariners.Attendance <- as.data.frame(Mariners.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Mariners.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Mariners.Attendance <- as.data.frame(VS.Mariners.Attendance)
+
+VS.Mariners.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Mariners.Attendance$V2 <- Average.Attendance$V1
+
+VS.Mariners.Attendance$V3 <- Mariners.Attendance$V1
+
+VS.Mariners.Attendance$V4 <- (VS.Mariners.Attendance$V3 - VS.Mariners.Attendance$V2)/VS.Mariners.Attendance$V2*100
+
+colnames(VS.Mariners.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Mariners", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Texas Rangers", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Rangers <- paste(i, "VS Rangers", sep = " ")
+    d=get(i)
+    assign(vs.Rangers, filter(d, d$`Visiting Team` == "Texas Rangers"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Rangers <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Rangers[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Rangers')
+
+NY.Home.25.Years.VS.Rangers <- "New York Yankees Home 25 Years VS Rangers"
+
+Team.Names.AL.Home.25.Years.VS.Rangers[13] <- NY.Home.25.Years.VS.Rangers
+
+for (i in Team.Names.AL.Home.25.Years.VS.Rangers) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-13]
+
+dlist.vs.Rangers <- lapply ( ls(patt='VS Rangers Average'), get)
+
+dlist.vs.Rangers <- dlist.vs.Rangers
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Rangers.Attendance <- do.call("rbind", dlist.vs.Rangers)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Rangers.Attendance <- as.data.frame(Rangers.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Rangers.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Rangers.Attendance <- as.data.frame(VS.Rangers.Attendance)
+
+VS.Rangers.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Rangers.Attendance$V2 <- Average.Attendance$V1
+
+VS.Rangers.Attendance$V3 <- Rangers.Attendance$V1
+
+VS.Rangers.Attendance$V4 <- (VS.Rangers.Attendance$V3 - VS.Rangers.Attendance$V2)/VS.Rangers.Attendance$V2*100
+
+colnames(VS.Rangers.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Rangers", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Los Angeles Angels", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Angels <- paste(i, "VS Angels", sep = " ")
+    d=get(i)
+    assign(vs.Angels, filter(d, d$`Visiting Team` == "Los Angeles Angels"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Angels <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Angels[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Angels')
+
+NY.Home.25.Years.VS.Angels <- "New York Yankees Home 25 Years VS Angels"
+
+Team.Names.AL.Home.25.Years.VS.Angels[13] <- NY.Home.25.Years.VS.Angels
+
+for (i in Team.Names.AL.Home.25.Years.VS.Angels) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-7]
+
+dlist.vs.Angels <- lapply ( ls(patt='VS Angels Average'), get)
+
+dlist.vs.Angels <- dlist.vs.Angels
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Angels.Attendance <- do.call("rbind", dlist.vs.Angels)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Angels.Attendance <- as.data.frame(Angels.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Angels.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Angels.Attendance <- as.data.frame(VS.Angels.Attendance)
+
+VS.Angels.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Angels.Attendance$V2 <- Average.Attendance$V1
+
+VS.Angels.Attendance$V3 <- Angels.Attendance$V1
+
+VS.Angels.Attendance$V4 <- (VS.Angels.Attendance$V3 - VS.Angels.Attendance$V2)/VS.Angels.Attendance$V2*100
+
+colnames(VS.Angels.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Angels", "Percent Increase")
+
+GL2010.AL <- filter(GL2010, GL2010$`Home Team League` == "AL")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Kansas City Royals", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Royals <- paste(i, "VS Royals", sep = " ")
+    d=get(i)
+    assign(vs.Royals, filter(d, d$`Visiting Team` == "Kansas City Royals"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Royals <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Royals[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Royals')
+
+NY.Home.25.Years.VS.Royals <- "New York Yankees Home 25 Years VS Royals"
+
+Team.Names.AL.Home.25.Years.VS.Royals[13] <- NY.Home.25.Years.VS.Royals
+
+for (i in Team.Names.AL.Home.25.Years.VS.Royals) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-6]
+
+dlist.vs.Royals <- lapply ( ls(patt='VS Royals Average'), get)
+
+dlist.vs.Royals <- dlist.vs.Royals
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Royals.Attendance <- do.call("rbind", dlist.vs.Royals)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Royals.Attendance <- as.data.frame(Royals.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Royals.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Royals.Attendance <- as.data.frame(VS.Royals.Attendance)
+
+VS.Royals.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Royals.Attendance$V2 <- Average.Attendance$V1
+
+VS.Royals.Attendance$V3 <- Royals.Attendance$V1
+
+VS.Royals.Attendance$V4 <- (VS.Royals.Attendance$V3 - VS.Royals.Attendance$V2)/VS.Royals.Attendance$V2*100
+
+colnames(VS.Royals.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Royals", "Percent Increase")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Cleveland Indians", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Indians <- paste(i, "VS Indians", sep = " ")
+    d=get(i)
+    assign(vs.Indians, filter(d, d$`Visiting Team` == "Cleveland Indians"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Indians <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Indians[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Indians')
+
+NY.Home.25.Years.VS.Indians <- "New York Yankees Home 25 Years VS Indians"
+
+Team.Names.AL.Home.25.Years.VS.Indians[13] <- NY.Home.25.Years.VS.Indians
+
+for (i in Team.Names.AL.Home.25.Years.VS.Indians) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-4]
+
+dlist.vs.Indians <- lapply ( ls(patt='VS Indians Average'), get)
+
+dlist.vs.Indians <- dlist.vs.Indians
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Indians.Attendance <- do.call("rbind", dlist.vs.Indians)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Indians.Attendance <- as.data.frame(Indians.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Indians.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Indians.Attendance <- as.data.frame(VS.Indians.Attendance)
+
+VS.Indians.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Indians.Attendance$V2 <- Average.Attendance$V1
+
+VS.Indians.Attendance$V3 <- Indians.Attendance$V1
+
+VS.Indians.Attendance$V4 <- (VS.Indians.Attendance$V3 - VS.Indians.Attendance$V2)/VS.Indians.Attendance$V2*100
+
+colnames(VS.Indians.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Indians", "Percent Increase")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Chicago White Sox", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.White.Sox <- paste(i, "VS White.Sox", sep = " ")
+    d=get(i)
+    assign(vs.White.Sox, filter(d, d$`Visiting Team` == "Chicago White Sox"))
+}
+
+Team.Names.AL.Home.25.Years.VS.White.Sox <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.White.Sox[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS White.Sox')
+
+NY.Home.25.Years.VS.White.Sox <- "New York Yankees Home 25 Years VS White.Sox"
+
+Team.Names.AL.Home.25.Years.VS.White.Sox[13] <- NY.Home.25.Years.VS.White.Sox
+
+for (i in Team.Names.AL.Home.25.Years.VS.White.Sox) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-3]
+
+dlist.vs.White.Sox <- lapply ( ls(patt='VS White.Sox Average'), get)
+
+dlist.vs.White.Sox <- dlist.vs.White.Sox
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+White.Sox.Attendance <- do.call("rbind", dlist.vs.White.Sox)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+White.Sox.Attendance <- as.data.frame(White.Sox.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.White.Sox.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.White.Sox.Attendance <- as.data.frame(VS.White.Sox.Attendance)
+
+VS.White.Sox.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.White.Sox.Attendance$V2 <- Average.Attendance$V1
+
+VS.White.Sox.Attendance$V3 <- White.Sox.Attendance$V1
+
+VS.White.Sox.Attendance$V4 <- (VS.White.Sox.Attendance$V3 - VS.White.Sox.Attendance$V2)/VS.White.Sox.Attendance$V2*100
+
+colnames(VS.White.Sox.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS White.Sox", "Percent Increase")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Minnesota Twins", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Twins <- paste(i, "VS Twins", sep = " ")
+    d=get(i)
+    assign(vs.Twins, filter(d, d$`Visiting Team` == "Minnesota Twins"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Twins <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Twins[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Twins')
+
+NY.Home.25.Years.VS.Twins <- "New York Yankees Home 25 Years VS Twins"
+
+Team.Names.AL.Home.25.Years.VS.Twins[13] <- NY.Home.25.Years.VS.Twins
+
+for (i in Team.Names.AL.Home.25.Years.VS.Twins) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-8]
+
+dlist.vs.Twins <- lapply ( ls(patt='VS Twins Average'), get)
+
+dlist.vs.Twins <- dlist.vs.Twins
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Twins.Attendance <- do.call("rbind", dlist.vs.Twins)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Twins.Attendance <- as.data.frame(Twins.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Twins.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Twins.Attendance <- as.data.frame(VS.Twins.Attendance)
+
+VS.Twins.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Twins.Attendance$V2 <- Average.Attendance$V1
+
+VS.Twins.Attendance$V3 <- Twins.Attendance$V1
+
+VS.Twins.Attendance$V4 <- (VS.Twins.Attendance$V3 - VS.Twins.Attendance$V2)/VS.Twins.Attendance$V2*100
+
+colnames(VS.Twins.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Twins", "Percent Increase")
+
+Team.Names.AL <- unique(GL2010.AL$`Home Team`)
+
+Team.Names.AL <- Team.Names.AL[!grepl("Detroit Tigers", Team.Names.AL)]
+
+Team.Names.AL.Home.25.Years <- Team.Names.AL
+
+Team.Names.AL.Home.25.Years[-length(Team.Names.AL)] <- paste0(Team.Names.AL[-length(Team.Names.AL)], ' Home 25 Years')
+
+NY.Home.25.Years <- "New York Yankees Home 25 Years"
+
+Team.Names.AL.Home.25.Years[13] <- NY.Home.25.Years
+
+for (i in Team.Names.AL.Home.25.Years) {
+    vs.Tigers <- paste(i, "VS Tigers", sep = " ")
+    d=get(i)
+    assign(vs.Tigers, filter(d, d$`Visiting Team` == "Detroit Tigers"))
+}
+
+Team.Names.AL.Home.25.Years.VS.Tigers <- Team.Names.AL.Home.25.Years
+
+Team.Names.AL.Home.25.Years.VS.Tigers[-length(Team.Names.AL.Home.25.Years)] <- paste0(Team.Names.AL.Home.25.Years[-length(Team.Names.AL.Home.25.Years)], ' VS Tigers')
+
+NY.Home.25.Years.VS.Tigers <- "New York Yankees Home 25 Years VS Tigers"
+
+Team.Names.AL.Home.25.Years.VS.Tigers[13] <- NY.Home.25.Years.VS.Tigers
+
+for (i in Team.Names.AL.Home.25.Years.VS.Tigers) {
+    average.attendance <- paste(i, "Average Attendance", sep = " ")
+    d=get(i)
+    assign(average.attendance, mean(na.omit(d$`Attendance`)))
+}
+
+dlist.average.attendance <- lapply ( ls(patt='25 Years AVERAGE ATTENDANCE'), get)
+
+dlist.average.attendance <- dlist.average.attendance[-5]
+
+dlist.vs.Tigers <- lapply ( ls(patt='VS Tigers Average'), get)
+
+dlist.vs.Tigers <- dlist.vs.Tigers
+
+Average.Attendance <- do.call("rbind", dlist.average.attendance)
+
+Tigers.Attendance <- do.call("rbind", dlist.vs.Tigers)
+
+Average.Attendance <- as.data.frame(Average.Attendance)
+
+Tigers.Attendance <- as.data.frame(Tigers.Attendance)
+
+Team.Names.Al.Alphabetical <- sort(Team.Names.AL)
+
+VS.Tigers.Attendance <- matrix(0, ncol = 4, nrow = 13)
+
+VS.Tigers.Attendance <- as.data.frame(VS.Tigers.Attendance)
+
+VS.Tigers.Attendance$V1 <- Team.Names.Al.Alphabetical
+
+VS.Tigers.Attendance$V2 <- Average.Attendance$V1
+
+VS.Tigers.Attendance$V3 <- Tigers.Attendance$V1
+
+VS.Tigers.Attendance$V4 <- (VS.Tigers.Attendance$V3 - VS.Tigers.Attendance$V2)/VS.Tigers.Attendance$V2*100
+
+colnames(VS.Tigers.Attendance)[1:4]=c("Team", "Average Attendance", "Average Attendance VS Tigers", "Percent Increase")
+
+AL.Teams <- c("Yankees", "Red Sox", "Blue Jays", "Orioles", "Rays", "Angels", "White Sox", "Royals", "Athletics", "Rangers", "Tigers", "Indians", "Twins", "Mariners")
+
+AL.Percent.Attendance.Boost <- c(mean(VS.Yankees.Attendance$`Percent Increase`), mean(VS.Red.Sox.Attendance$`Percent Increase`), mean(VS.Blue.Jays.Attendance$`Percent Increase`), mean(VS.Orioles.Attendance$`Percent Increase`), mean(VS.Rays.Attendance$`Percent Increase`), mean(VS.Angels.Attendance$`Percent Increase`), mean(VS.White.Sox.Attendance$`Percent Increase`), mean(VS.Royals.Attendance$`Percent Increase`), mean(VS.Athletics.Attendance$`Percent Increase`), mean(VS.Rangers.Attendance$`Percent Increase`), mean(VS.Tigers.Attendance$`Percent Increase`), mean(VS.Indians.Attendance$`Percent Increase`), mean(VS.Twins.Attendance$`Percent Increase`), mean(VS.Mariners.Attendance$`Percent Increase`))
+
+AL.Attendance.Boost <- matrix(0, ncol = 2, nrow = 14)
+
+AL.Attendance.Boost <- as.data.frame(AL.Attendance.Boost)
+
+AL.Attendance.Boost$V1 <- AL.Teams
+
+AL.Attendance.Boost$V2 <- AL.Percent.Attendance.Boost
+
+colnames(AL.Attendance.Boost)[1:2]=c("Team", "Percent Increase")
+
+par(mar=c(5, 5.5, 3, 1))
+barplot(AL.Attendance.Boost$`Percent Increase`, names.arg = AL.Attendance.Boost$`Team`, ylab = "Percent Change", xlab = "Team", main = "Road Attendence Affect", col = "slateblue3", cex.names = .9, cex.main = 3, cex.lab = 2)
+```
+
+This visualization shows the average change in attendance that each team produces when they play on the road.  Across the y-axis, we have the percent change, which was gathered from data on fan attendance at specified team’s past games. This was found for each team and compared across teams to show that there are teams that you may play that will positively and negatively affect your attendances stats. For example, playing the Boston Red Sox on average increases a teams’ home attendance by 8%, while playing the Tampa Bay Rays decreases the other teams home attendance statistic by 5%. 
+
+
+# The information used here was obtained free of charge from and is copyrighted by Retrosheet.  Interested parties may contact Retrosheet at "www.retrosheet.org".
